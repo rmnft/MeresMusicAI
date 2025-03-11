@@ -64,7 +64,7 @@ async function mockStemSeparation(
 ): Promise<Stem[]> {
   // Simulate the processing time
   const totalSteps = 10;
-  const stepTime = 1000; // 1 second per step
+  const stepTime = 500; // 0.5 second per step
   
   // Get the file name without extension
   const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
@@ -75,19 +75,19 @@ async function mockStemSeparation(
     onProgress(Math.round((step / totalSteps) * 100));
   }
   
-  // Create mock stem URLs for demo purposes
+  // Create mock stem URLs for demo purposes - using static files from GitHub that work reliably
   if (separationType === '2stem') {
     return [
       {
         id: '1',
         name: `${baseName} - Vocals`,
-        url: 'https://audio-samples.github.io/samples/mp3/blizzard_primed/vocals.mp3',
+        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-vocals.mp3',
         type: 'vocals'
       },
       {
         id: '2',
         name: `${baseName} - Accompaniment`,
-        url: 'https://audio-samples.github.io/samples/mp3/blizzard_primed/accompaniment.mp3',
+        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-accompaniment.mp3',
         type: 'accompaniment'
       }
     ];
@@ -96,25 +96,25 @@ async function mockStemSeparation(
       {
         id: '1',
         name: `${baseName} - Vocals`,
-        url: 'https://audio-samples.github.io/samples/mp3/blizzard_tinted/vocals.mp3',
+        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-vocals.mp3',
         type: 'vocals'
       },
       {
         id: '2',
         name: `${baseName} - Drums`,
-        url: 'https://audio-samples.github.io/samples/mp3/blizzard_tinted/drums.mp3',
+        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-drums.mp3',
         type: 'drums'
       },
       {
         id: '3',
         name: `${baseName} - Bass`,
-        url: 'https://audio-samples.github.io/samples/mp3/blizzard_tinted/bass.mp3',
+        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-bass.mp3',
         type: 'bass'
       },
       {
         id: '4',
         name: `${baseName} - Other`,
-        url: 'https://audio-samples.github.io/samples/mp3/blizzard_tinted/other.mp3',
+        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-other.mp3',
         type: 'other'
       }
     ];

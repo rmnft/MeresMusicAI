@@ -24,14 +24,22 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   
-  // Inicializa o áudio quando o componente for montado
+  // Initialize audio when component mounts
   useEffect(() => {
-    const audio = new Audio(stem.url);
-    audioRef.current = audio;
+    // First, clean up any existing audio object
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
     
+    // Create new audio object
+    const audio = new Audio();
+    
+    // Setup event handlers first before setting src
     const setAudioData = () => {
       setDuration(audio.duration);
       setIsLoading(false);
+      setError(null);
       console.log(`Audio loaded: ${stem.name}, duration: ${audio.duration}`);
     };
 
@@ -44,31 +52,48 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
       setCurrentTime(0);
     };
     
-    const onError = (e: ErrorEvent) => {
+    const onError = (e: Event) => {
       console.error(`Error loading audio ${stem.name}:`, e);
       setError("Erro ao carregar áudio");
       setIsLoading(false);
     };
     
-    // Events
+    // Attach events
     audio.addEventListener('loadeddata', setAudioData);
+    audio.addEventListener('loadedmetadata', setAudioData); // Additional event for some browsers
+    audio.addEventListener('canplaythrough', setAudioData); // Additional event for some browsers
     audio.addEventListener('timeupdate', setAudioTime);
     audio.addEventListener('ended', onEnded);
-    audio.addEventListener('error', onError as EventListener);
+    audio.addEventListener('error', onError);
     
     // Set volume initially
     audio.volume = volume;
+    audioRef.current = audio;
     
-    // Preload audio
-    audio.load();
+    // Only after all event listeners are set, assign the src
+    audio.src = stem.url;
+    
+    // Try to load audio
+    try {
+      audio.load();
+    } catch (err) {
+      console.error("Error loading audio:", err);
+      setError("Erro ao carregar áudio");
+      setIsLoading(false);
+    }
     
     return () => {
       // Cleanup
-      audio.pause();
-      audio.removeEventListener('loadeddata', setAudioData);
-      audio.removeEventListener('timeupdate', setAudioTime);
-      audio.removeEventListener('ended', onEnded);
-      audio.removeEventListener('error', onError as EventListener);
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+        audio.removeEventListener('loadeddata', setAudioData);
+        audio.removeEventListener('loadedmetadata', setAudioData);
+        audio.removeEventListener('canplaythrough', setAudioData);
+        audio.removeEventListener('timeupdate', setAudioTime);
+        audio.removeEventListener('ended', onEnded);
+        audio.removeEventListener('error', onError);
+      }
     };
   }, [stem.url, stem.name]);
 
@@ -79,6 +104,7 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
     
     if (isPlaying) {
       audio.pause();
+      setIsPlaying(false);
     } else {
       // Play returns a promise
       const playPromise = audio.play();
@@ -87,15 +113,15 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
         playPromise
           .then(() => {
             console.log(`Playing ${stem.name}`);
+            setIsPlaying(true);
           })
           .catch(err => {
             console.error("Error playing audio:", err);
             setError("Erro ao reproduzir áudio");
+            setIsPlaying(false);
           });
       }
     }
-    
-    setIsPlaying(!isPlaying);
   };
 
   // Handle volume change
