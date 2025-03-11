@@ -4,6 +4,9 @@ import { Stem } from "../components/StemPlayer";
 const REPLICATE_API_KEY = "r8_T9DAwbjrrcQ2XapDyktGl9mKaT4EknQ1Se7qE";
 const DEMUCS_MODEL = "cjwbw/demucs:e5a2cb62bcf4649c83f0c2f38810d5404d1be5f22cafc5df90abb0e343c7b1b9";
 
+// Flag to use mock data (for development when API calls fail)
+const USE_MOCK_DATA = true;
+
 // Main function to handle stem separation using Replicate
 export const processStemSeparation = async (
   file: File,
@@ -11,6 +14,12 @@ export const processStemSeparation = async (
   onProgress: (progress: number) => void
 ): Promise<Stem[]> => {
   try {
+    // If mock data is enabled, use that instead of actual API
+    if (USE_MOCK_DATA) {
+      console.log("Using mock data instead of actual API call");
+      return await mockStemSeparation(file, separationType, onProgress);
+    }
+    
     // Start the progress with file uploading stage
     onProgress(10);
     
@@ -31,7 +40,7 @@ export const processStemSeparation = async (
     );
     
     if (!prediction.id) {
-      throw new Error("Failed to start prediction");
+      throw new Error("Falha ao iniciar a predição");
     }
     
     console.log("Prediction started with ID:", prediction.id);
@@ -46,6 +55,71 @@ export const processStemSeparation = async (
     throw error;
   }
 };
+
+// Mock function to simulate stem separation for development
+async function mockStemSeparation(
+  file: File,
+  separationType: '2stem' | '4stem',
+  onProgress: (progress: number) => void
+): Promise<Stem[]> {
+  // Simulate the processing time
+  const totalSteps = 10;
+  const stepTime = 1000; // 1 second per step
+  
+  // Get the file name without extension
+  const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+  
+  // Simulate API processing
+  for (let step = 1; step <= totalSteps; step++) {
+    await new Promise(resolve => setTimeout(resolve, stepTime));
+    onProgress(Math.round((step / totalSteps) * 100));
+  }
+  
+  // Create mock stem URLs for demo purposes
+  if (separationType === '2stem') {
+    return [
+      {
+        id: '1',
+        name: `${baseName} - Vocals`,
+        url: 'https://audio-samples.github.io/samples/mp3/blizzard_primed/vocals.mp3',
+        type: 'vocals'
+      },
+      {
+        id: '2',
+        name: `${baseName} - Accompaniment`,
+        url: 'https://audio-samples.github.io/samples/mp3/blizzard_primed/accompaniment.mp3',
+        type: 'accompaniment'
+      }
+    ];
+  } else {
+    return [
+      {
+        id: '1',
+        name: `${baseName} - Vocals`,
+        url: 'https://audio-samples.github.io/samples/mp3/blizzard_tinted/vocals.mp3',
+        type: 'vocals'
+      },
+      {
+        id: '2',
+        name: `${baseName} - Drums`,
+        url: 'https://audio-samples.github.io/samples/mp3/blizzard_tinted/drums.mp3',
+        type: 'drums'
+      },
+      {
+        id: '3',
+        name: `${baseName} - Bass`,
+        url: 'https://audio-samples.github.io/samples/mp3/blizzard_tinted/bass.mp3',
+        type: 'bass'
+      },
+      {
+        id: '4',
+        name: `${baseName} - Other`,
+        url: 'https://audio-samples.github.io/samples/mp3/blizzard_tinted/other.mp3',
+        type: 'other'
+      }
+    ];
+  }
+}
 
 // Convert File to base64 string for API upload
 async function fileToBase64(file: File): Promise<string> {
@@ -93,13 +167,13 @@ async function startReplicatePrediction(
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Replicate API error:", errorText);
-      throw new Error(`Failed to start prediction: ${response.status} ${errorText}`);
+      throw new Error(`Falha ao iniciar predição: ${response.status} ${errorText}`);
     }
     
     return await response.json();
   } catch (error) {
     console.error("Error starting prediction:", error);
-    throw new Error(`Failed to connect to Replicate API: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Falha ao conectar com a API Replicate: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
   }
 }
 

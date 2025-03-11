@@ -64,8 +64,20 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ isProcessing, progr
           </div>
           
           <p className="text-xs text-muted-foreground mt-4">
-            Isso pode levar alguns minutos dependendo do tamanho do seu arquivo
+            {progress < 100 ? 
+              "Isso pode levar alguns minutos dependendo do tamanho do seu arquivo" :
+              "A separação está quase concluída!"
+            }
           </p>
+          
+          {progress === 100 && (
+            <div className="mt-3 text-center">
+              <div className="inline-flex items-center gap-2 text-xs text-red-500">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Finalizando processamento...
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
