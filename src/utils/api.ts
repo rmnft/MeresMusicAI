@@ -22,7 +22,7 @@ export const processStemSeparation = async (
     onProgress((i / progressSteps) * 100);
   }
   
-  // Return mock stems based on separation type
+  // Return mock stems based on separation type and matching the actual file uploaded
   const fileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
   
   if (separationType === '2stem') {

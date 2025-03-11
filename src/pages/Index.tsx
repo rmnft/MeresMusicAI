@@ -6,6 +6,7 @@ import StemOptions from '../components/StemOptions';
 import ProcessingStatus from '../components/ProcessingStatus';
 import StemPlayer, { Stem } from '../components/StemPlayer';
 import Footer from '../components/Footer';
+import Particles from '../components/Particles';
 import { processStemSeparation } from '../utils/api';
 import { ArrowDown, Download, Music } from 'lucide-react';
 import { toast } from "sonner";
@@ -75,17 +76,18 @@ const Index = () => {
   
   return (
     <div className="flex flex-col min-h-screen">
+      <Particles />
       <Header />
       
       <main className="flex-1 container py-10">
         <div className="mx-auto max-w-3xl">
           <div className="text-center mb-10 animate-slide-down">
             <div className="inline-block mb-4">
-              <div className="w-14 h-14 rounded-xl bg-accent/20 flex items-center justify-center mb-4 mx-auto">
-                <Music className="w-8 h-8 text-accent animate-pulse-glow" />
+              <div className="w-14 h-14 rounded-xl bg-red-600/20 flex items-center justify-center mb-4 mx-auto">
+                <Music className="w-8 h-8 text-red-500 animate-pulse-glow" />
               </div>
               <h1 className="text-4xl font-bold mb-3 text-glow">
-                <span className="text-gradient">Stem Separation</span>
+                <span className="text-gradient-red">AI Stem Separation</span>
               </h1>
             </div>
             <p className="text-lg text-muted-foreground max-w-md mx-auto">
@@ -107,7 +109,7 @@ const Index = () => {
             <div className="w-full max-w-xl mx-auto mt-8 animate-slide-up" style={{ animationDelay: "0.4s" }}>
               <button
                 onClick={handleProcess}
-                className="w-full py-3 rounded-xl glass glass-hover bg-gradient-to-r from-primary/80 to-secondary/80 text-primary-foreground font-medium transition-all duration-300 hover:shadow-lg hover:from-primary hover:to-secondary"
+                className="w-full py-3 rounded-xl glass glass-hover bg-gradient-to-r from-red-700/80 to-red-500/80 text-white font-medium transition-all duration-300 hover:shadow-lg hover:from-red-700 hover:to-red-500"
               >
                 Start Processing
               </button>
@@ -127,7 +129,7 @@ const Index = () => {
                 </div>
                 <button
                   onClick={handleDownloadAll}
-                  className="flex items-center gap-1.5 px-3 py-1.5 glass glass-hover rounded-lg text-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 glass glass-hover rounded-lg text-sm hover:text-red-500"
                 >
                   <Download className="w-4 h-4" />
                   <span>Download All</span>
@@ -155,7 +157,7 @@ const Index = () => {
                         setSeparationType(null);
                         setStems([]);
                       }}
-                      className="mt-3 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                      className="mt-3 text-xs font-medium text-red-500 hover:text-red-400 transition-colors"
                     >
                       Change separation type
                     </button>
