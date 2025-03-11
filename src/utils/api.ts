@@ -1,244 +1,204 @@
+
 import { Stem } from "../components/StemPlayer";
 
-// This is a mock of the actual API processing
-// In a real implementation, you would:
-// 1. Upload the file to a temporary storage
-// 2. Send the URL to the Replicate API
-// 3. Fetch the results when ready
+const REPLICATE_API_KEY = "r8_T9DAwbjrrcQ2XapDyktGl9mKaT4EknQ1Se7qE";
+const DEMUCS_MODEL = "cjwbw/demucs:e5a2cb62bcf4649c83f0c2f38810d5404d1be5f22cafc5df90abb0e343c7b1b9";
 
-// Helper function to create a modified version of the audio file
-// This simulates different stems by applying audio processing
-const createProcessedAudioBlob = async (
-  file: File,
-  type: 'vocals' | 'accompaniment' | 'drums' | 'bass' | 'other'
-): Promise<string> => {
-  // For a real implementation, this would be the actual stem separation
-  // Here we're just creating a simulated effect
-  
-  try {
-    // Create an audio context
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
-    // Read the file and decode it
-    const arrayBuffer = await file.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    
-    // Create a new audio buffer for processing
-    const processedBuffer = audioContext.createBuffer(
-      audioBuffer.numberOfChannels,
-      audioBuffer.length,
-      audioBuffer.sampleRate
-    );
-    
-    // Apply different "effects" based on stem type to simulate separation
-    for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
-      const inputData = audioBuffer.getChannelData(channel);
-      const outputData = processedBuffer.getChannelData(channel);
-      
-      // Different processing for each stem type
-      switch (type) {
-        case 'vocals':
-          // Simulate vocals by emphasizing mid frequencies and reducing others
-          for (let i = 0; i < inputData.length; i++) {
-            // Simple simulation - reduce amplitude and add pattern
-            outputData[i] = inputData[i] * 0.8 * (1 + 0.2 * Math.sin(i * 0.001));
-          }
-          break;
-          
-        case 'accompaniment':
-          // Simulate accompaniment by keeping most frequencies but reducing some
-          for (let i = 0; i < inputData.length; i++) {
-            // Reduce some frequency ranges
-            outputData[i] = inputData[i] * 0.9 * (1 - 0.15 * Math.sin(i * 0.0005));
-          }
-          break;
-          
-        case 'drums':
-          // Simulate drums by emphasizing transients and low frequencies
-          for (let i = 0; i < inputData.length; i++) {
-            // Emphasize sharp changes (crude approximation of transients)
-            const nextSample = i < inputData.length - 1 ? inputData[i + 1] : 0;
-            const diff = Math.abs(nextSample - inputData[i]);
-            outputData[i] = inputData[i] * 0.6 + diff * 2;
-          }
-          break;
-          
-        case 'bass':
-          // Simulate bass by emphasizing low frequencies
-          for (let i = 0; i < inputData.length; i++) {
-            // Low-pass filter simulation
-            outputData[i] = inputData[i] * 0.7 * (1 - 0.3 * Math.cos(i * 0.0001));
-          }
-          break;
-          
-        case 'other':
-          // Simulate other instruments
-          for (let i = 0; i < inputData.length; i++) {
-            // Phase shift and filter simulation
-            outputData[i] = inputData[i] * 0.75 * (1 + 0.3 * Math.cos(i * 0.0015));
-          }
-          break;
-          
-        default:
-          // Fallback - just copy the data
-          outputData.set(inputData);
-      }
-    }
-    
-    // Convert the processed buffer back to a blob
-    const offlineContext = new OfflineAudioContext(
-      processedBuffer.numberOfChannels,
-      processedBuffer.length,
-      processedBuffer.sampleRate
-    );
-    
-    const source = offlineContext.createBufferSource();
-    source.buffer = processedBuffer;
-    source.connect(offlineContext.destination);
-    source.start(0);
-    
-    const renderedBuffer = await offlineContext.startRendering();
-    
-    // Convert to WAV format
-    const channelData = [];
-    for (let i = 0; i < renderedBuffer.numberOfChannels; i++) {
-      channelData.push(renderedBuffer.getChannelData(i));
-    }
-    
-    // Create WAV file with appropriate headers
-    const waveFile = createWaveFileData(channelData, renderedBuffer.sampleRate);
-    
-    // Create a blob and return URL
-    const blob = new Blob([waveFile], { type: 'audio/wav' });
-    return URL.createObjectURL(blob);
-  } catch (error) {
-    console.error('Error processing audio:', error);
-    // Fallback to original file if processing fails
-    return URL.createObjectURL(file);
-  }
-};
-
-// Helper function to create WAV file data
-const createWaveFileData = (channelData: Float32Array[], sampleRate: number): ArrayBuffer => {
-  const numChannels = channelData.length;
-  const length = channelData[0].length;
-  const bitDepth = 16; // 16-bit WAV
-  const byteDepth = bitDepth / 8;
-  const blockAlign = numChannels * byteDepth;
-  const byteRate = sampleRate * blockAlign;
-  const dataSize = length * blockAlign;
-  
-  const buffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(buffer);
-  
-  // WAV header
-  // "RIFF" chunk descriptor
-  writeString(view, 0, 'RIFF');
-  view.setUint32(4, 36 + dataSize, true);
-  writeString(view, 8, 'WAVE');
-  
-  // "fmt " sub-chunk
-  writeString(view, 12, 'fmt ');
-  view.setUint32(16, 16, true); // fmt chunk size
-  view.setUint16(20, 1, true); // audio format (PCM)
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, byteRate, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, bitDepth, true);
-  
-  // "data" sub-chunk
-  writeString(view, 36, 'data');
-  view.setUint32(40, dataSize, true);
-  
-  // Write audio data
-  const offset = 44;
-  for (let i = 0; i < length; i++) {
-    for (let channel = 0; channel < numChannels; channel++) {
-      const sample = Math.max(-1, Math.min(1, channelData[channel][i]));
-      const value = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-      view.setInt16(offset + (i * blockAlign) + (channel * byteDepth), value, true);
-    }
-  }
-  
-  return buffer;
-};
-
-// Helper function to write a string to a DataView
-const writeString = (view: DataView, offset: number, string: string): void => {
-  for (let i = 0; i < string.length; i++) {
-    view.setUint8(offset + i, string.charCodeAt(i));
-  }
-};
-
+// Main function to handle stem separation using Replicate
 export const processStemSeparation = async (
   file: File,
   separationType: '2stem' | '4stem',
   onProgress: (progress: number) => void
 ): Promise<Stem[]> => {
-  // Simulate processing delay and progress
-  const totalTime = file.size > 10 * 1024 * 1024 ? 10000 : 5000;
-  const progressSteps = 20;
-  const stepTime = totalTime / progressSteps;
+  try {
+    // Start the progress with file uploading stage
+    onProgress(10);
+    
+    // Convert the file to base64
+    const base64Data = await fileToBase64(file);
+    
+    // Determine model parameters based on separation type
+    const modelVersion = DEMUCS_MODEL;
+    const twoStemMode = separationType === '2stem';
+    
+    // Send prediction request to Replicate
+    const prediction = await startReplicatePrediction(
+      modelVersion, 
+      base64Data, 
+      twoStemMode
+    );
+    
+    if (!prediction.id) {
+      throw new Error("Failed to start prediction");
+    }
+    
+    // Poll for prediction results
+    const results = await pollPredictionResults(prediction.id, onProgress);
+    
+    // Process and return the stem URLs
+    return processStemResults(results, file.name, separationType);
+  } catch (error) {
+    console.error("Error in stem separation:", error);
+    throw error;
+  }
+};
+
+// Convert File to base64 string for API upload
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        // Remove the prefix (e.g., "data:audio/mp3;base64,")
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      } else {
+        reject(new Error("Failed to convert file to base64"));
+      }
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+// Start a new prediction on Replicate
+async function startReplicatePrediction(
+  modelVersion: string, 
+  base64Audio: string,
+  twoStemMode: boolean
+) {
+  const response = await fetch("https://api.replicate.com/v1/predictions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Token ${REPLICATE_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      version: modelVersion,
+      input: {
+        audio: `data:audio/mp3;base64,${base64Audio}`,
+        two_stems: twoStemMode ? "vocals" : "no" // "vocals" for 2-stem, "no" for 4-stem
+      }
+    })
+  });
   
-  for (let i = 1; i <= progressSteps; i++) {
-    await new Promise(resolve => setTimeout(resolve, stepTime));
-    onProgress((i / progressSteps) * 100);
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to start prediction: ${error}`);
   }
   
-  // Get the file name without extension
-  const fileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+  return await response.json();
+}
+
+// Poll for prediction results until complete
+async function pollPredictionResults(
+  predictionId: string, 
+  onProgress: (progress: number) => void
+): Promise<any> {
+  let status = "starting";
+  let attempts = 0;
+  const maxAttempts = 100; // About 5 minutes of polling
   
-  // Create different processed versions of the audio for each stem
+  while (status !== "succeeded" && status !== "failed" && attempts < maxAttempts) {
+    // Wait 3 seconds between polling attempts
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    const response = await fetch(
+      `https://api.replicate.com/v1/predictions/${predictionId}`,
+      {
+        headers: {
+          "Authorization": `Token ${REPLICATE_API_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to check prediction status: ${await response.text()}`);
+    }
+    
+    const prediction = await response.json();
+    status = prediction.status;
+    
+    // Update progress based on status
+    switch (status) {
+      case "starting":
+        onProgress(20);
+        break;
+      case "processing":
+        // Gradually increase progress from 20 to 90 as processing continues
+        onProgress(20 + Math.min(70, attempts * 2)); 
+        break;
+      case "succeeded":
+        onProgress(100);
+        return prediction.output;
+      case "failed":
+        throw new Error("Prediction failed: " + (prediction.error || "Unknown error"));
+    }
+    
+    attempts++;
+  }
+  
+  if (attempts >= maxAttempts) {
+    throw new Error("Prediction timed out");
+  }
+  
+  throw new Error("Unexpected error in prediction polling");
+}
+
+// Process results and create stem objects
+function processStemResults(
+  results: any, 
+  fileName: string, 
+  separationType: '2stem' | '4stem'
+): Stem[] {
+  // Get the file name without extension
+  const baseName = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+  
   if (separationType === '2stem') {
-    const vocalsUrl = await createProcessedAudioBlob(file, 'vocals');
-    const accompUrl = await createProcessedAudioBlob(file, 'accompaniment');
+    // In 2-stem mode, we expect vocals and accompaniment
+    const vocalsUrl = results.find((url: string) => url.includes("vocals"));
+    const otherUrl = results.find((url: string) => url.includes("no_vocals") || url.includes("other"));
+    
+    if (!vocalsUrl || !otherUrl) {
+      throw new Error("Missing expected output files from Replicate");
+    }
     
     return [
       {
         id: '1',
-        name: `${fileName} - Vocals`,
+        name: `${baseName} - Vocals`,
         url: vocalsUrl,
         type: 'vocals'
       },
       {
         id: '2',
-        name: `${fileName} - Accompaniment`,
-        url: accompUrl,
+        name: `${baseName} - Accompaniment`,
+        url: otherUrl,
         type: 'accompaniment'
       }
     ];
   } else {
-    const vocalsUrl = await createProcessedAudioBlob(file, 'vocals');
-    const drumsUrl = await createProcessedAudioBlob(file, 'drums');
-    const bassUrl = await createProcessedAudioBlob(file, 'bass');
-    const otherUrl = await createProcessedAudioBlob(file, 'other');
-    
-    return [
-      {
-        id: '1',
-        name: `${fileName} - Vocals`,
-        url: vocalsUrl,
-        type: 'vocals'
-      },
-      {
-        id: '2',
-        name: `${fileName} - Drums`,
-        url: drumsUrl,
-        type: 'drums'
-      },
-      {
-        id: '3',
-        name: `${fileName} - Bass`,
-        url: bassUrl,
-        type: 'bass'
-      },
-      {
-        id: '4',
-        name: `${fileName} - Other`,
-        url: otherUrl,
-        type: 'other'
-      }
+    // In 4-stem mode, expect vocals, drums, bass, and other
+    const stems: { type: 'vocals' | 'drums' | 'bass' | 'other', label: string }[] = [
+      { type: 'vocals', label: 'vocals' },
+      { type: 'drums', label: 'drums' },
+      { type: 'bass', label: 'bass' },
+      { type: 'other', label: 'other' }
     ];
+    
+    return stems.map((stem, index) => {
+      const stemUrl = results.find((url: string) => url.includes(stem.label));
+      if (!stemUrl) {
+        throw new Error(`Missing ${stem.label} output file from Replicate`);
+      }
+      
+      return {
+        id: String(index + 1),
+        name: `${baseName} - ${stem.label.charAt(0).toUpperCase() + stem.label.slice(1)}`,
+        url: stemUrl,
+        type: stem.type
+      };
+    });
   }
-};
+}

@@ -37,6 +37,10 @@ const Index = () => {
     setStems([]);
     
     try {
+      toast.info("Starting DEMUCS Model", {
+        description: "Uploading your file to Replicate for AI processing. This may take a few minutes."
+      });
+
       const result = await processStemSeparation(
         file,
         separationType,
@@ -45,12 +49,12 @@ const Index = () => {
       
       setStems(result);
       toast.success("Separation Complete", {
-        description: `Your ${separationType === '2stem' ? '2' : '4'} stems are ready!`
+        description: `Your ${separationType === '2stem' ? '2' : '4'} stems are ready to play!`
       });
     } catch (error) {
       console.error('Error processing stems:', error);
       toast.error("Processing Failed", {
-        description: "There was an error processing your file. Please try again."
+        description: error instanceof Error ? error.message : "There was an error processing your file. Please try again."
       });
     } finally {
       setIsProcessing(false);
@@ -58,12 +62,13 @@ const Index = () => {
   };
   
   const handleDownloadAll = () => {
-    // In a real app, this would download a zip file with all stems
+    if (stems.length === 0) return;
+    
     toast.info("Download Started", {
       description: "Downloading all stems as individual files."
     });
     
-    // Simulate download all stems
+    // Download all stems
     stems.forEach(stem => {
       const link = document.createElement('a');
       link.href = stem.url;
@@ -91,7 +96,7 @@ const Index = () => {
               </h1>
             </div>
             <p className="text-lg text-muted-foreground max-w-md mx-auto">
-              Isolate vocals, drums, bass, and other instruments from your music using AI technology
+              Isolate vocals, drums, bass, and other instruments from your music using DEMUCS AI technology
             </p>
           </div>
           
@@ -111,7 +116,7 @@ const Index = () => {
                 onClick={handleProcess}
                 className="w-full py-3 rounded-xl glass glass-hover bg-gradient-to-r from-red-700/80 to-red-500/80 text-white font-medium transition-all duration-300 hover:shadow-lg hover:from-red-700 hover:to-red-500"
               >
-                Start Processing
+                Start Processing with DEMUCS
               </button>
             </div>
           )}
@@ -148,7 +153,7 @@ const Index = () => {
                     <ArrowDown className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium mb-1">Need more stems?</h3>
+                    <h3 className="text-sm font-medium mb-1">Need different stems?</h3>
                     <p className="text-xs text-muted-foreground">
                       Choose a different separation type to get more or fewer stems, depending on your needs.
                     </p>

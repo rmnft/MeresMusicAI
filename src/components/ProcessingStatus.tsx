@@ -10,6 +10,14 @@ interface ProcessingStatusProps {
 const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ isProcessing, progress }) => {
   if (!isProcessing) return null;
   
+  // Helper to determine the current stage message
+  const getStageMessage = () => {
+    if (progress < 20) return "Uploading your audio file...";
+    if (progress < 40) return "Starting the DEMUCS model...";
+    if (progress < 70) return "Separating audio stems...";
+    return "Finalizing and preparing your stems...";
+  };
+  
   return (
     <div className="w-full max-w-xl mx-auto mt-8 animate-fade-in">
       <div className="glass rounded-2xl p-6">
@@ -29,9 +37,9 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ isProcessing, progr
             </div>
           </div>
           
-          <h3 className="text-lg font-medium mb-2">Processing your audio file</h3>
+          <h3 className="text-lg font-medium mb-2">Processing with DEMUCS AI</h3>
           <p className="text-sm text-muted-foreground text-center mb-4">
-            We're separating the stems with AI. This might take a few minutes depending on file size.
+            {getStageMessage()}
           </p>
           
           <div className="w-full progress-indicator mt-2">
