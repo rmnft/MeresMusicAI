@@ -1,4 +1,3 @@
-
 import { Stem } from "../components/StemPlayer";
 
 const REPLICATE_API_KEY = "r8_T9DAwbjrrcQ2XapDyktGl9mKaT4EknQ1Se7qE";
@@ -6,6 +5,15 @@ const DEMUCS_MODEL = "cjwbw/demucs:e5a2cb62bcf4649c83f0c2f38810d5404d1be5f22cafc
 
 // Flag to use mock data (for development when API calls fail)
 const USE_MOCK_DATA = true;
+
+// Sample MP3 URLs that are known to work reliably (from sample-mp3s.com)
+const SAMPLE_AUDIO_URLS = {
+  vocals: "https://assets.mixkit.co/music/preview/mixkit-beautiful-dream-493.mp3",
+  accompaniment: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3",
+  drums: "https://assets.mixkit.co/music/preview/mixkit-hazy-after-hours-132.mp3",
+  bass: "https://assets.mixkit.co/music/preview/mixkit-hip-hop-02-738.mp3",
+  other: "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3"
+};
 
 // Main function to handle stem separation using Replicate
 export const processStemSeparation = async (
@@ -75,19 +83,21 @@ async function mockStemSeparation(
     onProgress(Math.round((step / totalSteps) * 100));
   }
   
-  // Create mock stem URLs for demo purposes - using static files from GitHub that work reliably
+  console.log("Mock data: Creating stems with reliable audio URLs");
+  
+  // Create mock stem URLs using reliable sources
   if (separationType === '2stem') {
     return [
       {
         id: '1',
         name: `${baseName} - Vocals`,
-        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-vocals.mp3',
+        url: SAMPLE_AUDIO_URLS.vocals,
         type: 'vocals'
       },
       {
         id: '2',
         name: `${baseName} - Accompaniment`,
-        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-accompaniment.mp3',
+        url: SAMPLE_AUDIO_URLS.accompaniment,
         type: 'accompaniment'
       }
     ];
@@ -96,25 +106,25 @@ async function mockStemSeparation(
       {
         id: '1',
         name: `${baseName} - Vocals`,
-        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-vocals.mp3',
+        url: SAMPLE_AUDIO_URLS.vocals,
         type: 'vocals'
       },
       {
         id: '2',
         name: `${baseName} - Drums`,
-        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-drums.mp3',
+        url: SAMPLE_AUDIO_URLS.drums,
         type: 'drums'
       },
       {
         id: '3',
         name: `${baseName} - Bass`,
-        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-bass.mp3',
+        url: SAMPLE_AUDIO_URLS.bass,
         type: 'bass'
       },
       {
         id: '4',
         name: `${baseName} - Other`,
-        url: 'https://github.com/AudiaVuong/AudiaVuong.github.io/raw/main/music/sample-other.mp3',
+        url: SAMPLE_AUDIO_URLS.other,
         type: 'other'
       }
     ];

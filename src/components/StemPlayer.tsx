@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, Download, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Stem {
   id: string;
@@ -20,6 +21,7 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
   const [volume, setVolume] = useState(0.8);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
@@ -32,15 +34,27 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
       audioRef.current.src = '';
     }
     
+    // Reset states on new stem
+    setIsLoading(true);
+    setError(null);
+    setCurrentTime(0);
+    setDuration(0);
+    setIsPlaying(false);
+    
+    console.log(`Attempting to load audio: ${stem.name}, URL: ${stem.url}`);
+    
     // Create new audio object
     const audio = new Audio();
+    
+    // Force CORS mode to anonymous to help with some CORS issues
+    audio.crossOrigin = "anonymous";
     
     // Setup event handlers first before setting src
     const setAudioData = () => {
       setDuration(audio.duration);
       setIsLoading(false);
       setError(null);
-      console.log(`Audio loaded: ${stem.name}, duration: ${audio.duration}`);
+      console.log(`Audio loaded successfully: ${stem.name}, duration: ${audio.duration}`);
     };
 
     const setAudioTime = () => {
@@ -56,6 +70,11 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
       console.error(`Error loading audio ${stem.name}:`, e);
       setError("Erro ao carregar áudio");
       setIsLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Erro de áudio",
+        description: `Não foi possível carregar: ${stem.name}`,
+      });
     };
     
     // Attach events
@@ -70,32 +89,28 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
     audio.volume = volume;
     audioRef.current = audio;
     
-    // Only after all event listeners are set, assign the src
-    audio.src = stem.url;
-    
-    // Try to load audio
+    // Set the src last after all event handlers are in place
     try {
+      audio.src = stem.url;
       audio.load();
     } catch (err) {
-      console.error("Error loading audio:", err);
-      setError("Erro ao carregar áudio");
+      console.error("Error initializing audio:", err);
+      setError("Erro ao inicializar áudio");
       setIsLoading(false);
     }
     
     return () => {
       // Cleanup
-      if (audio) {
-        audio.pause();
-        audio.src = '';
-        audio.removeEventListener('loadeddata', setAudioData);
-        audio.removeEventListener('loadedmetadata', setAudioData);
-        audio.removeEventListener('canplaythrough', setAudioData);
-        audio.removeEventListener('timeupdate', setAudioTime);
-        audio.removeEventListener('ended', onEnded);
-        audio.removeEventListener('error', onError);
-      }
+      audio.pause();
+      audio.removeEventListener('loadeddata', setAudioData);
+      audio.removeEventListener('loadedmetadata', setAudioData);
+      audio.removeEventListener('canplaythrough', setAudioData);
+      audio.removeEventListener('timeupdate', setAudioTime);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
+      audio.src = '';
     };
-  }, [stem.url, stem.name]);
+  }, [stem.url, stem.name, toast]);
 
   // Handle play/pause
   const togglePlay = () => {
@@ -119,6 +134,11 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
             console.error("Error playing audio:", err);
             setError("Erro ao reproduzir áudio");
             setIsPlaying(false);
+            toast({
+              variant: "destructive",
+              title: "Erro de reprodução",
+              description: "Não foi possível reproduzir o áudio",
+            });
           });
       }
     }
@@ -170,8 +190,6 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
 
   return (
     <div className="glass rounded-xl p-4 animate-scale-in">
-      {/* Removemos o elemento <audio> inline e usamos uma instância via JavaScript */}
-      
       <div className="flex items-center mb-4">
         <div 
           className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
