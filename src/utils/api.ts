@@ -22,21 +22,26 @@ export const processStemSeparation = async (
     onProgress((i / progressSteps) * 100);
   }
   
-  // Return mock stems based on separation type and matching the actual file uploaded
+  // Create mock stems based on the actual uploaded file
+  // In a real implementation, these would be the actual separated stems
   const fileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+  
+  // Instead of using predefined tracks, we'll create mock stems based on the user's file
+  // creating object URLs from the uploaded file
+  const fileURL = URL.createObjectURL(file);
   
   if (separationType === '2stem') {
     return [
       {
         id: '1',
         name: `${fileName} - Vocals`,
-        url: 'https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3', // Example URL
+        url: fileURL, // Use the actual uploaded file for the mock
         type: 'vocals'
       },
       {
         id: '2',
         name: `${fileName} - Accompaniment`,
-        url: 'https://assets.mixkit.co/music/preview/mixkit-hazy-after-hours-132.mp3', // Example URL
+        url: fileURL, // Use the actual uploaded file for the mock
         type: 'accompaniment'
       }
     ];
@@ -45,25 +50,25 @@ export const processStemSeparation = async (
       {
         id: '1',
         name: `${fileName} - Vocals`,
-        url: 'https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3', // Example URL
+        url: fileURL, // Use the actual uploaded file for the mock
         type: 'vocals'
       },
       {
         id: '2',
         name: `${fileName} - Drums`,
-        url: 'https://assets.mixkit.co/music/preview/mixkit-hazy-after-hours-132.mp3', // Example URL
+        url: fileURL, // Use the actual uploaded file for the mock
         type: 'drums'
       },
       {
         id: '3',
         name: `${fileName} - Bass`,
-        url: 'https://assets.mixkit.co/music/preview/mixkit-hip-hop-02-621.mp3', // Example URL
+        url: fileURL, // Use the actual uploaded file for the mock
         type: 'bass'
       },
       {
         id: '4',
         name: `${fileName} - Other`,
-        url: 'https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3', // Example URL
+        url: fileURL, // Use the actual uploaded file for the mock
         type: 'other'
       }
     ];
