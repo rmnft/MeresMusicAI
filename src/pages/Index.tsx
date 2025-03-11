@@ -37,8 +37,8 @@ const Index = () => {
     setStems([]);
     
     try {
-      toast.info("Starting DEMUCS Model", {
-        description: "Uploading your file to Replicate for AI processing. This may take a few minutes."
+      toast.info("Iniciando modelo DEMUCS", {
+        description: "Enviando seu arquivo para processamento com IA. Isso pode levar alguns minutos."
       });
 
       const result = await processStemSeparation(
@@ -48,13 +48,13 @@ const Index = () => {
       );
       
       setStems(result);
-      toast.success("Separation Complete", {
-        description: `Your ${separationType === '2stem' ? '2' : '4'} stems are ready to play!`
+      toast.success("Separação Completa", {
+        description: `Seus ${separationType === '2stem' ? '2' : '4'} stems estão prontos para reprodução!`
       });
     } catch (error) {
       console.error('Error processing stems:', error);
-      toast.error("Processing Failed", {
-        description: error instanceof Error ? error.message : "There was an error processing your file. Please try again."
+      toast.error("Falha no Processamento", {
+        description: error instanceof Error ? error.message : "Houve um erro ao processar seu arquivo. Por favor, tente novamente."
       });
     } finally {
       setIsProcessing(false);
@@ -64,8 +64,8 @@ const Index = () => {
   const handleDownloadAll = () => {
     if (stems.length === 0) return;
     
-    toast.info("Download Started", {
-      description: "Downloading all stems as individual files."
+    toast.info("Download Iniciado", {
+      description: "Baixando todos os stems como arquivos individuais."
     });
     
     // Download all stems
@@ -92,11 +92,11 @@ const Index = () => {
                 <Music className="w-8 h-8 text-red-500 animate-pulse-glow" />
               </div>
               <h1 className="text-4xl font-bold mb-3 text-glow">
-                <span className="text-gradient-red">AI Stem Separation</span>
+                <span className="text-gradient-red">Separação de Stems com IA</span>
               </h1>
             </div>
             <p className="text-lg text-muted-foreground max-w-md mx-auto">
-              Isolate vocals, drums, bass, and other instruments from your music using DEMUCS AI technology
+              Isole vocais, bateria, baixo e outros instrumentos da sua música usando a tecnologia DEMUCS AI
             </p>
           </div>
           
@@ -116,7 +116,7 @@ const Index = () => {
                 onClick={handleProcess}
                 className="w-full py-3 rounded-xl glass glass-hover bg-gradient-to-r from-red-700/80 to-red-500/80 text-white font-medium transition-all duration-300 hover:shadow-lg hover:from-red-700 hover:to-red-500"
               >
-                Start Processing with DEMUCS
+                Iniciar Processamento com DEMUCS
               </button>
             </div>
           )}
@@ -127,7 +127,7 @@ const Index = () => {
             <div className="w-full max-w-xl mx-auto mt-12 animate-fade-in">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-medium">Your Separated Stems</h2>
+                  <h2 className="text-lg font-medium">Seus Stems Separados</h2>
                   <span className="px-2 py-0.5 text-xs font-medium bg-muted rounded-full">
                     {stems.length} stems
                   </span>
@@ -137,7 +137,7 @@ const Index = () => {
                   className="flex items-center gap-1.5 px-3 py-1.5 glass glass-hover rounded-lg text-sm hover:text-red-500"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Download All</span>
+                  <span>Baixar Todos</span>
                 </button>
               </div>
               
@@ -153,9 +153,9 @@ const Index = () => {
                     <ArrowDown className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium mb-1">Need different stems?</h3>
+                    <h3 className="text-sm font-medium mb-1">Precisa de stems diferentes?</h3>
                     <p className="text-xs text-muted-foreground">
-                      Choose a different separation type to get more or fewer stems, depending on your needs.
+                      Escolha um tipo de separação diferente para obter mais ou menos stems, dependendo das suas necessidades.
                     </p>
                     <button
                       onClick={() => {
@@ -164,7 +164,7 @@ const Index = () => {
                       }}
                       className="mt-3 text-xs font-medium text-red-500 hover:text-red-400 transition-colors"
                     >
-                      Change separation type
+                      Alterar tipo de separação
                     </button>
                   </div>
                 </div>

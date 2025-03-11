@@ -21,13 +21,9 @@ export const processStemSeparation = async (
     const modelVersion = DEMUCS_MODEL;
     const twoStemMode = separationType === '2stem';
     
-    // Create a mock response for development/testing - we'll remove this when the API works
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Using mock data for development");
-      return await mockSeparation(file.name, separationType, onProgress);
-    }
+    console.log("Starting stem separation with Replicate API");
     
-    // Send prediction request to Replicate via a proxy if needed
+    // Send prediction request to Replicate
     const prediction = await startReplicatePrediction(
       modelVersion, 
       base64Data, 
@@ -37,6 +33,8 @@ export const processStemSeparation = async (
     if (!prediction.id) {
       throw new Error("Failed to start prediction");
     }
+    
+    console.log("Prediction started with ID:", prediction.id);
     
     // Poll for prediction results
     const results = await pollPredictionResults(prediction.id, onProgress);
@@ -74,8 +72,9 @@ async function startReplicatePrediction(
   twoStemMode: boolean
 ) {
   try {
+    console.log("Sending request to Replicate API");
+    
     // For browser environments, due to CORS, you might need a proxy server
-    // Here we're trying with direct request first and if that fails, you might need a server proxy
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -94,15 +93,13 @@ async function startReplicatePrediction(
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Replicate API error:", errorText);
-      throw new Error(`Failed to start prediction: ${errorText}`);
+      throw new Error(`Failed to start prediction: ${response.status} ${errorText}`);
     }
     
     return await response.json();
   } catch (error) {
     console.error("Error starting prediction:", error);
-    // Fall back to mock data if the real API call fails
-    console.log("Falling back to mock data due to API error");
-    throw error;
+    throw new Error(`Failed to connect to Replicate API: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -120,6 +117,8 @@ async function pollPredictionResults(
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     try {
+      console.log(`Polling prediction status (attempt ${attempts + 1})`);
+      
       const response = await fetch(
         `https://api.replicate.com/v1/predictions/${predictionId}`,
         {
@@ -132,11 +131,12 @@ async function pollPredictionResults(
       
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to check prediction status: ${errorText}`);
+        throw new Error(`Failed to check prediction status: ${response.status} ${errorText}`);
       }
       
       const prediction = await response.json();
       status = prediction.status;
+      console.log("Current status:", status);
       
       // Update progress based on status
       switch (status) {
@@ -149,8 +149,10 @@ async function pollPredictionResults(
           break;
         case "succeeded":
           onProgress(100);
+          console.log("Processing succeeded:", prediction.output);
           return prediction.output;
         case "failed":
+          console.error("Prediction failed:", prediction.error);
           throw new Error("Prediction failed: " + (prediction.error || "Unknown error"));
       }
     } catch (error) {
@@ -174,6 +176,8 @@ function processStemResults(
   fileName: string, 
   separationType: '2stem' | '4stem'
 ): Stem[] {
+  console.log("Processing results:", results);
+  
   // Get the file name without extension
   const baseName = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
   
@@ -222,69 +226,5 @@ function processStemResults(
         type: stem.type
       };
     });
-  }
-}
-
-// Create mock stems for development/testing
-async function mockSeparation(
-  fileName: string,
-  separationType: '2stem' | '4stem',
-  onProgress: (progress: number) => void
-): Promise<Stem[]> {
-  // Simulate API delays
-  for (let i = 10; i <= 90; i += 10) {
-    onProgress(i);
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
-  onProgress(100);
-  
-  // Get the file name without extension
-  const baseName = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
-  
-  // Create mock data based on separation type
-  if (separationType === '2stem') {
-    return [
-      {
-        id: '1',
-        name: `${baseName} - Vocals`,
-        // Use placeholder URLs or test audio files
-        url: 'https://assets.codepen.io/4358584/Anitek_-_Komorebi.mp3',
-        type: 'vocals'
-      },
-      {
-        id: '2',
-        name: `${baseName} - Accompaniment`,
-        url: 'https://assets.codepen.io/4358584/Moonlight-Reprise.mp3',
-        type: 'accompaniment'
-      }
-    ];
-  } else {
-    // 4-stem mode
-    return [
-      {
-        id: '1',
-        name: `${baseName} - Vocals`,
-        url: 'https://assets.codepen.io/4358584/Anitek_-_Komorebi.mp3',
-        type: 'vocals'
-      },
-      {
-        id: '2',
-        name: `${baseName} - Drums`,
-        url: 'https://assets.codepen.io/4358584/Moonlight-Reprise.mp3',
-        type: 'drums'
-      },
-      {
-        id: '3',
-        name: `${baseName} - Bass`,
-        url: 'https://assets.codepen.io/4358584/Anitek_-_Komorebi.mp3',
-        type: 'bass'
-      },
-      {
-        id: '4',
-        name: `${baseName} - Other`,
-        url: 'https://assets.codepen.io/4358584/Moonlight-Reprise.mp3',
-        type: 'other'
-      }
-    ];
   }
 }
