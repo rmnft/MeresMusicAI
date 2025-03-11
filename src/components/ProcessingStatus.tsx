@@ -42,26 +42,30 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ isProcessing, progr
             {getStageMessage()}
           </p>
           
-          <div className="w-full progress-indicator mt-2">
-            <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-2">
+            <div 
+              className="h-full bg-red-500 transition-all duration-300 ease-in-out" 
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
           
-          <div className="audio-visualizer mt-6">
+          <div className="flex justify-center space-x-1 mt-6">
             {[...Array(10)].map((_, i) => (
               <div 
                 key={i} 
-                className="bar" 
+                className="w-1 bg-red-500/80 rounded-full"
                 style={{ 
                   height: `${Math.random() * 24 + 8}px`,
-                  animationName: 'wave',
-                  animationDuration: '1.2s',
-                  animationDelay: `${i * 0.1}s`,
-                  animationIterationCount: 'infinite',
-                  animationTimingFunction: 'ease-in-out' 
+                  animation: 'wave 1.2s ease-in-out infinite',
+                  animationDelay: `${i * 0.1}s`
                 }}
               ></div>
             ))}
           </div>
+          
+          <p className="text-xs text-muted-foreground mt-4">
+            This may take a few minutes depending on your file size
+          </p>
         </div>
       </div>
     </div>
