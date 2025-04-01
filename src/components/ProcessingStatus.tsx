@@ -12,8 +12,8 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ isProcessing, progr
   
   // Helper to determine the current stage message
   const getStageMessage = () => {
-    if (progress < 20) return "Enviando seu arquivo de áudio para o servidor...";
-    if (progress < 40) return "Iniciando o processamento com DEMUCS...";
+    if (progress < 20) return "Enviando seu arquivo de áudio...";
+    if (progress < 40) return "Iniciando o modelo DEMUCS...";
     if (progress < 70) return "Separando as partes do áudio...";
     return "Finalizando e preparando seus stems...";
   };
