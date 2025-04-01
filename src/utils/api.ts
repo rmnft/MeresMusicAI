@@ -222,5 +222,5 @@ export const mockStemSeparation = async (
 // USE_MOCK_API = true para usar dados fictícios
 export const USE_MOCK_API = false; 
 
-// Exportar a função principal
-export { USE_MOCK_API ? mockStemSeparation : processStemSeparation as _processStemSeparation };
+// Exportar a função principal corretamente, sem usar a sintaxe de operador ternário diretamente na exportação
+export const _processStemSeparation = USE_MOCK_API ? mockStemSeparation : processStemSeparation;
