@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, Download, AlertCircle } from 'lucide-react';
+import { Play, Pause, Volume2, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export interface Stem {
@@ -19,45 +19,38 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.8);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   
-  // Initialize audio when component mounts
   useEffect(() => {
-    // First, clean up any existing audio object
+    // Clean up any existing audio object
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = '';
     }
     
-    // Reset states on new stem
+    // Reset states
     setIsLoading(true);
     setError(null);
     setCurrentTime(0);
     setDuration(0);
     setIsPlaying(false);
     
-    console.log(`Attempting to load audio: ${stem.name}, URL: ${stem.url}`);
-    
-    // Create new audio object
     const audio = new Audio();
+    audio.volume = volume;
     
-    // Force CORS mode to anonymous to help with some CORS issues
-    audio.crossOrigin = "anonymous";
-    
-    // Setup event handlers first before setting src
-    const setAudioData = () => {
+    // Setup event handlers
+    const onDataLoaded = () => {
       setDuration(audio.duration);
       setIsLoading(false);
-      setError(null);
-      console.log(`Audio loaded successfully: ${stem.name}, duration: ${audio.duration}`);
+      console.log(`Audio loaded: ${stem.name}, duration: ${audio.duration}`);
     };
 
-    const setAudioTime = () => {
+    const onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
     };
 
@@ -66,8 +59,8 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
       setCurrentTime(0);
     };
     
-    const onError = (e: Event) => {
-      console.error(`Error loading audio ${stem.name}:`, e);
+    const onError = () => {
+      console.error(`Error loading audio: ${stem.name}`);
       setError("Erro ao carregar áudio");
       setIsLoading(false);
       toast({
@@ -78,18 +71,14 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
     };
     
     // Attach events
-    audio.addEventListener('loadeddata', setAudioData);
-    audio.addEventListener('loadedmetadata', setAudioData); // Additional event for some browsers
-    audio.addEventListener('canplaythrough', setAudioData); // Additional event for some browsers
-    audio.addEventListener('timeupdate', setAudioTime);
+    audio.addEventListener('loadeddata', onDataLoaded);
+    audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('ended', onEnded);
     audio.addEventListener('error', onError);
     
-    // Set volume initially
-    audio.volume = volume;
     audioRef.current = audio;
     
-    // Set the src last after all event handlers are in place
+    // Set source after event listeners are attached
     try {
       audio.src = stem.url;
       audio.load();
@@ -99,18 +88,22 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
       setIsLoading(false);
     }
     
+    // Cleanup on unmount
     return () => {
-      // Cleanup
       audio.pause();
-      audio.removeEventListener('loadeddata', setAudioData);
-      audio.removeEventListener('loadedmetadata', setAudioData);
-      audio.removeEventListener('canplaythrough', setAudioData);
-      audio.removeEventListener('timeupdate', setAudioTime);
+      audio.removeEventListener('loadeddata', onDataLoaded);
+      audio.removeEventListener('timeupdate', onTimeUpdate);
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
       audio.src = '';
     };
   }, [stem.url, stem.name, toast]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   // Handle play/pause
   const togglePlay = () => {
@@ -121,7 +114,6 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
       audio.pause();
       setIsPlaying(false);
     } else {
-      // Play returns a promise
       const playPromise = audio.play();
       
       if (playPromise !== undefined) {
@@ -226,7 +218,6 @@ const StemPlayer: React.FC<StemPlayerProps> = ({ stem }) => {
       
       {error ? (
         <div className="p-3 bg-destructive/10 rounded-lg text-destructive text-sm flex items-center gap-2 my-2">
-          <AlertCircle className="h-4 w-4" />
           <span>{error}</span>
         </div>
       ) : (
