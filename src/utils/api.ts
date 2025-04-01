@@ -15,51 +15,31 @@ export const processStemSeparation = async (
     // Preparar o arquivo para envio
     const formData = new FormData();
     formData.append('audio', file);
-    
-    // Determinar o modelo com base no tipo de separação
-    const model = separationType === '2stem' 
-      ? 'facebookresearch/demucs:v3.0.0' 
-      : 'facebookresearch/demucs:v3.0.0'; // Mesmo modelo, mas configuraremos para 4 stems
+    formData.append('separationType', separationType);
     
     // Simular o início do upload
     onProgress(10);
     
-    // Converter o arquivo em uma URL base64
-    const base64Audio = await fileToBase64(file);
-    onProgress(20);
-    
-    // Configurar parâmetros para a API do Replicate
-    const payload = {
-      version: model,
-      input: {
-        audio: base64Audio,
-        // Definir parâmetros específicos para 2stem ou 4stem
-        ...(separationType === '2stem' ? { stems: "vocals" } : {})
-      }
-    };
-    
-    // Iniciar a predição no Replicate
-    console.log("Enviando arquivo para processamento no Replicate API");
-    const predictionResponse = await fetch(REPLICATE_API_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Token ${API_TOKEN}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
+    // Enviar o arquivo para o nosso backend proxy
+    const backendUrl = 'https://demucs-api.onrender.com/api/process'; // URL do nosso backend proxy
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      body: formData,
     });
     
-    if (!predictionResponse.ok) {
-      const errorData = await predictionResponse.json();
-      throw new Error(`Erro na API Replicate: ${JSON.stringify(errorData)}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erro no servidor: ${response.status} - ${errorText}`);
     }
     
-    const prediction = await predictionResponse.json();
     onProgress(30);
     
-    // Verificar status da predição periodicamente
-    const predictionId = prediction.id;
-    const result = await pollPredictionStatus(predictionId, onProgress);
+    // Iniciar o polling para checar o status do processamento
+    const data = await response.json();
+    const jobId = data.jobId;
+    
+    // Polling do backend para checar status
+    const result = await pollJobStatus(jobId, onProgress);
     
     // Obter URLs dos stems resultantes
     onProgress(90);
@@ -123,35 +103,17 @@ export const processStemSeparation = async (
   }
 };
 
-// Função auxiliar para converter arquivo em base64
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64String = reader.result as string;
-      // Remover o prefixo 'data:audio/xxx;base64,' para ter apenas os dados codificados
-      const base64Data = base64String.split(',')[1];
-      resolve(base64Data);
-    };
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-// Função para verificar o status da predição periodicamente
-const pollPredictionStatus = async (
-  predictionId: string, 
+// Função para verificar o status de um job
+const pollJobStatus = async (
+  jobId: string, 
   onProgress: (progress: number) => void
 ): Promise<Record<string, string>> => {
+  const backendUrl = `https://demucs-api.onrender.com/api/status/${jobId}`;
   const maxAttempts = 60; // 5 minutos no total com intervalo de 5 segundos
   let attempts = 0;
   
   while (attempts < maxAttempts) {
-    const statusResponse = await fetch(`${REPLICATE_API_URL}/${predictionId}`, {
-      headers: {
-        "Authorization": `Token ${API_TOKEN}`,
-      }
-    });
+    const statusResponse = await fetch(backendUrl);
     
     if (!statusResponse.ok) {
       const errorData = await statusResponse.json();
@@ -161,7 +123,7 @@ const pollPredictionStatus = async (
     const statusData = await statusResponse.json();
     
     // Verificar o status
-    if (statusData.status === "succeeded") {
+    if (statusData.status === "completed") {
       console.log("Processamento concluído com sucesso!");
       return statusData.output;
     } else if (statusData.status === "failed") {
@@ -257,8 +219,8 @@ export const mockStemSeparation = async (
 };
 
 // Defina a função que será usada (real ou mock)
-// Para testes sem conectar com a API externa, use USE_MOCK_API = true
-const USE_MOCK_API = false;
+// USE_MOCK_API = true para usar dados fictícios
+export const USE_MOCK_API = false; 
 
-// Exportar a função principal que usa a API real ou o mockup
-export { mockStemSeparation as _processStemSeparation };
+// Exportar a função principal
+export { USE_MOCK_API ? mockStemSeparation : processStemSeparation as _processStemSeparation };
