@@ -12,10 +12,10 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ isProcessing, progr
   
   // Helper to determine the current stage message
   const getStageMessage = () => {
-    if (progress < 20) return "Enviando seu arquivo de áudio...";
-    if (progress < 40) return "Iniciando o modelo DEMUCS...";
-    if (progress < 70) return "Separando as partes do áudio...";
-    return "Finalizando e preparando seus stems...";
+    if (progress < 20) return "Simulando o processamento de áudio...";
+    if (progress < 40) return "Preparando demonstração...";
+    if (progress < 70) return "Carregando áudios de amostra...";
+    return "Finalizando a demonstração...";
   };
   
   return (
@@ -37,7 +37,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ isProcessing, progr
             </div>
           </div>
           
-          <h3 className="text-lg font-medium mb-2">Processando com DEMUCS AI</h3>
+          <h3 className="text-lg font-medium mb-2">Demonstração em andamento</h3>
           <p className="text-sm text-muted-foreground text-center mb-4">
             {getStageMessage()}
           </p>
@@ -63,18 +63,15 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({ isProcessing, progr
             ))}
           </div>
           
-          <p className="text-xs text-muted-foreground mt-4">
-            {progress < 100 ? 
-              "Isso pode levar alguns minutos dependendo do tamanho do seu arquivo" :
-              "A separação está quase concluída!"
-            }
+          <p className="text-xs text-amber-400 mt-4 font-medium">
+            MODO DEMO - Utilizando áudios pré-definidos
           </p>
           
           {progress === 100 && (
             <div className="mt-3 text-center">
               <div className="inline-flex items-center gap-2 text-xs text-red-500">
                 <Loader2 className="w-3 h-3 animate-spin" />
-                Finalizando processamento...
+                Finalizando demonstração...
               </div>
             </div>
           )}

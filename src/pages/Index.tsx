@@ -37,8 +37,8 @@ const Index = () => {
     setStems([]);
     
     try {
-      toast.info("Iniciando modelo DEMUCS", {
-        description: "Enviando seu arquivo para processamento com IA. Isso pode levar alguns minutos."
+      toast.info("Iniciando processamento em modo demo", {
+        description: "Esta é uma demonstração com áudios pré-definidos. Nenhuma API externa é chamada."
       });
 
       const result = await processStemSeparation(
@@ -96,8 +96,11 @@ const Index = () => {
               </h1>
             </div>
             <p className="text-lg text-muted-foreground max-w-md mx-auto">
-              Isole vocais, bateria, baixo e outros instrumentos da sua música usando a tecnologia DEMUCS AI
+              Demonstração de separação de stems usando áudios pré-definidos
             </p>
+            <div className="mt-2 text-sm text-amber-400 font-medium">
+              MODO DEMO - Sem processamento real de áudio
+            </div>
           </div>
           
           <FileUpload onFileSelected={handleFileSelected} />
@@ -116,7 +119,7 @@ const Index = () => {
                 onClick={handleProcess}
                 className="w-full py-3 rounded-xl glass glass-hover bg-gradient-to-r from-red-700/80 to-red-500/80 text-white font-medium transition-all duration-300 hover:shadow-lg hover:from-red-700 hover:to-red-500"
               >
-                Iniciar Processamento com DEMUCS
+                Iniciar Processamento (Modo Demo)
               </button>
             </div>
           )}
